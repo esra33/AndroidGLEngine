@@ -28,9 +28,9 @@ public class Quaternion {
 	}
 	public Quaternion(Vector3 eulerAngles) {
 		
-		float a = eulerAngles.x*0.5f;
-		float b = eulerAngles.y*0.5f;
-		float c = eulerAngles.z*0.5f;
+		float a = (float)(Math.toRadians(eulerAngles.z))*0.5f;
+		float b = (float)(Math.toRadians(eulerAngles.x))*0.5f;
+		float c = (float)(Math.toRadians(eulerAngles.y))*0.5f;
 		
 		float cosa = (float)Math.cos(a), sena = (float)Math.sin(a);
 		float cosb = (float)Math.cos(b), senb = (float)Math.sin(b);
@@ -74,14 +74,14 @@ public class Quaternion {
 	
 	// Euler angles manipulation
 	public static Vector3 toEulerAngles(Quaternion q) {
-		float q0 = q.x, 
-			q1 = q.y,
-			q2 = q.z,
-			q3 = q.w;
+		float q0 = q.w, 
+			q1 = q.x,
+			q2 = q.y,
+			q3 = q.z;
 
-		return new Vector3((float)Math.atan2(2*(q1*q3 - q0*q2), 1 - 2*(q1*q1 + q2*q2)),
-							(float)Math.asin (2*(q0*q1 + q3*q2)),
-							(float)Math.atan2(2*(q0*q3 - q1*q2), 1 - 2*(q2*q2 + q0*q0)));
+		return new Vector3((float)Math.toDegrees(Math.asin (2*(q0*q2 + q3*q1))),
+							(float)Math.toDegrees(Math.atan2(2*(q0*q3 + q1*q2), 1 - 2*(q2*q2 + q3*q3))),
+							(float)Math.toDegrees(Math.atan2(2*(q0*q1 + q2*q3), 1 - 2*(q1*q1 + q2*q2))));
 	}
 	public static Vector3 rotateVectorByQuaternion(Vector3 base, Quaternion q) {
 		Quaternion qOut = new Quaternion(base.x, base.y, base.z, 0);

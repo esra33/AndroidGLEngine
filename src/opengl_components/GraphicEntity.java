@@ -1,7 +1,6 @@
 package opengl_components;
 
 import java.util.ArrayList;
-import java.util.Currency;
 import java.util.List;
 
 import math_components.Matrix4x4;
@@ -25,6 +24,7 @@ public class GraphicEntity {
 	boolean m_bMatrixIsDirty;
 	
 	// Scene graph hierarchy
+	boolean m_bLocked = false;
 	GraphicEntity m_Parent;
 	List<GraphicEntity> m_Children;
 	
@@ -110,9 +110,7 @@ public class GraphicEntity {
 	// get as global components
 	public Quaternion getRotation() {
 		Quaternion p = m_Parent != null? m_Parent.getRotation() : Quaternion.identity();
-		Quaternion pc = p.conjugate();
-		
-		return Quaternion.mult(Quaternion.mult(p, m_LocalRotation), pc);
+		return Quaternion.mult(p, m_LocalRotation);
 	}
 	
 	public Vector3 getEulerAngles() {
@@ -120,8 +118,8 @@ public class GraphicEntity {
 	}
 	
 	public Vector3 getPosition() {
-		Vector3 pPos = m_Parent != null? m_Parent.getPosition() : Vector3.zero();
-		return Vector3.add(m_LocalPosition, pPos);
+		Matrix4x4 pTransf = m_Parent != null? m_Parent.getWorldTransformationMatrix() : Matrix4x4.identity();
+		return Matrix4x4.multiplyVector3(pTransf, m_LocalPosition);
 	}
 	
 	public Vector3 getScale() {
@@ -139,19 +137,35 @@ public class GraphicEntity {
 	// dunno though
 	public void setRotation(Quaternion rotation) {
 		Quaternion p = m_Parent != null? m_Parent.getRotation() : Quaternion.identity();
-		Quaternion pc = p.conjugate();
 		
 		// invert
 		p = p.invert();
-		pc = pc.invert();
 		
-		m_LocalRotation = Quaternion.mult(Quaternion.mult(pc, rotation), p);
+		m_LocalRotation = Quaternion.mult(p,rotation);
 		m_bMatrixIsDirty = true;
 	}
 	
 	public void setPosition(Vector3 position) {
-		Vector3 pPos = m_Parent != null? m_Parent.getPosition() : Vector3.zero();
-		m_LocalPosition = Vector3.subtract(position, pPos);
+		
+		final Matrix4x4 invTransl;
+		final Matrix4x4 invRotation;
+		final Matrix4x4 invScale;
+		
+		if(m_Parent != null) {
+			invTransl = new Matrix4x4();
+			invTransl.setColumn(3, Vector3.scale(-1, m_Parent.getPosition()), 1);
+			
+			invRotation = Matrix4x4.transpose(Matrix4x4.createRotationMatrix(m_Parent.getRotation()));
+			
+			Vector3 scal = m_Parent.getScale();
+			invScale = Matrix4x4.createScaleMatrix(new Vector3(1/scal.x, 1/scal.y, 1/scal.z));
+		} else {
+			invTransl = Matrix4x4.identity();
+			invRotation = Matrix4x4.identity();
+			invScale = Matrix4x4.identity();
+		}
+		
+		m_LocalPosition = Matrix4x4.multiplyVector3(Matrix4x4.mult(invScale, Matrix4x4.mult(invRotation, invTransl)), position);		
 		m_bMatrixIsDirty = true;
 	}
 	
@@ -162,10 +176,11 @@ public class GraphicEntity {
 	}
 	
 	// scene graph
-	public void setParent(GraphicEntity parent) {
-		if(parent == m_Parent) {
+	public synchronized void setParent(GraphicEntity parent) {
+		if(parent == m_Parent || m_bLocked) {
 			return;
 		}
+		m_bLocked = true;
 		
 		GraphicEntity curParent = m_Parent;
 		if(curParent != null) {
@@ -176,6 +191,7 @@ public class GraphicEntity {
 			m_Parent.addChildren(this);
 		}
 		m_bMatrixIsDirty = true;
+		m_bLocked = false;
 	}
 	
 	public void removeChildren(GraphicEntity children) {
@@ -185,9 +201,55 @@ public class GraphicEntity {
 		
 		m_Children.remove(children);
 		children.setParent(null);
+		m_bLocked = false;
 	}
 	
 	public void addChildren(GraphicEntity children) {
-		if(children == null || m_Children.contains(children))
+		if(children == null || m_Children.contains(children)) {
+			return;
+		}
+		
+		m_Children.remove(children);
+		children.setParent(this);
+	}
+	
+	// Scripts management
+	public void addScript(Scriptable newScript) {
+		if(newScript == null || m_Scripts.contains(newScript)) {
+			return;
+		}
+		
+		m_Scripts.add(newScript);
+	}
+	
+	public Scriptable getScriptOfType(Class<?> cls) {
+		
+		for(Scriptable s : m_Scripts) {
+			if(cls.equals(s)) {
+				return s;
+			}
+		}
+		
+		return null;
+	}
+	
+	public void removeScript(Scriptable s) {
+		if(s == null || !m_Scripts.contains(s)) {
+			return;
+		}
+		
+		m_Scripts.remove(s);
+	}
+	
+	public void start() {
+		for(Scriptable s : m_Scripts) {
+			s.Start();
+		}
+	}
+	
+	public void update() {
+		for(Scriptable s : m_Scripts) {
+			s.Update();
+		}
 	}
 }

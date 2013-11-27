@@ -65,15 +65,32 @@ public class Matrix4x4 {
 	
 	public static Matrix4x4 mult(Matrix4x4 a, Matrix4x4 b) {
 		Matrix4x4 res = new Matrix4x4();
-		int i2, j2;
-		for(int i = 0; i < 4; i+=2) {
-			for(int j = 0; j < 4; j+=2) {
-				i2 = i+1;
-				j2 = j+1;
-				res.set(i, j, a.get(i, j)*b.get(j, i));
-				res.set(i2, j2, a.get(i2, j2)*b.get(j2, i2));
+		float sum;
+		for(int i = 0; i < 4; i++) {
+			for(int j = 0; j < 4; j++) {
+				sum = 0;
+				for(int k = 0; k < 4; k++) {
+					sum += a.get(i, k)*b.get(k, j);
+				}
+				res.set(i,j, sum);
 			}
 		}
+		return res;
+	}
+	
+	public static Matrix4x4 transpose(Matrix4x4 m) {
+		
+		Matrix4x4 res = new Matrix4x4();
+		int oi, oj;
+		for(int i = 0; i < 4; i+=2) {
+			for(int j = 0; j < 4; j+=2) {
+				oi = i+1;
+				oj = j+1;
+				res.set(j,j, m.get(j, i));
+				res.set(oj,oj, m.get(oj, oi));
+			}
+		}
+		
 		return res;
 	}
 	
@@ -170,5 +187,37 @@ public class Matrix4x4 {
 		}
 		
 		m_Matrix = matrix;
+	}
+	
+	public Matrix4x4 transpose() {
+		return Matrix4x4.transpose(this);
+	}
+	
+	public void setRow(int i, Vector3 xyz, float w) {
+		set(i,0, xyz.x);
+		set(i,1, xyz.y);
+		set(i,2, xyz.z);
+		set(i,3, w);
+	}
+	
+	public void setRow(int i, float x, Vector3 yzw) {
+		set(i,0, x);
+		set(i,1, yzw.x);
+		set(i,2, yzw.y);
+		set(i,3, yzw.z);
+	}
+	
+	public void setColumn(int j, Vector3 xyz, float w) {
+		set(0,j, xyz.x);
+		set(1,j, xyz.y);
+		set(2,j, xyz.z);
+		set(3,j, w);
+	}
+	
+	public void setColumn(int j, float x, Vector3 yzw) {
+		set(0,j, x);
+		set(1,j, yzw.x);
+		set(2,j, yzw.y);
+		set(3,j, yzw.z);
 	}
 }
