@@ -106,10 +106,10 @@ public class Matrix4x4 {
 		float x = r.x, y = r.y, z = r.z, w = r.w;
 		float X = x*x, Y = y*y, Z = z*z;
 		
-		return new Matrix4x4(1 - 2*Y - 2*Z, 2*x*y - 2*z*w, 2*x*z + 2*y*w, t.x,
-							 2*x*y + 2*z*w, 1 - 2*X - 2*Z, 2*y*z - 2*x*w, t.y,
-							 2*x*z - 2*y*w, 2*y*z - 2*x*w, 1 - 2*X - 2*Y, t.z,
-							 0,0,0,1);
+		return new Matrix4x4(1 - 2*Y - 2*Z, 2*x*y - 2*z*w, 2*x*z + 2*y*w, 0,
+							 2*x*y + 2*z*w, 1 - 2*X - 2*Z, 2*y*z - 2*x*w, 0,
+							 2*x*z - 2*y*w, 2*y*z - 2*x*w, 1 - 2*X - 2*Y, 0,
+							 t.x,t.y,t.z,1);
 	}
 	
 	/**

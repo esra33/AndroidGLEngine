@@ -28,9 +28,17 @@ public class Quaternion {
 	}
 	public Quaternion(Vector3 eulerAngles) {
 		
-		float a = (float)(Math.toRadians(eulerAngles.z))*0.5f;
-		float b = (float)(Math.toRadians(eulerAngles.x))*0.5f;
-		float c = (float)(Math.toRadians(eulerAngles.y))*0.5f;
+		float _x = eulerAngles.x;
+		float _y = eulerAngles.y;
+		float _z = eulerAngles.z;
+		
+		_x = _x > 180? _x - 360 : _x;
+		_y = _y > 180? _y - 360 : _y;
+		_z = _z > 180? _z - 360 : _z;
+		
+		float a = (float)(Math.toRadians(_x))*0.5f;
+		float b = (float)(Math.toRadians(_y))*0.5f;
+		float c = (float)(Math.toRadians(_z))*0.5f;
 		
 		float cosa = (float)Math.cos(a), sena = (float)Math.sin(a);
 		float cosb = (float)Math.cos(b), senb = (float)Math.sin(b);
@@ -40,6 +48,12 @@ public class Quaternion {
 		y = cosa*senb*cosc + sena*cosb*senc;
 		z = cosa*cosb*senc - sena*senb*cosc;
 		w = cosa*cosb*cosc + sena*senb*senc;
+		
+		float size = lenght();
+		x = x/size;
+		y = y/size;
+		z = z/size;
+		w = w/size;
 	}
 	
 	public static Quaternion mult(Quaternion q1, Quaternion q2) {
@@ -74,17 +88,11 @@ public class Quaternion {
 	
 	// Euler angles manipulation
 	public static Vector3 toEulerAngles(Quaternion q) {
-		float q0 = q.w, 
-			q1 = q.x,
-			q2 = q.y,
-			q3 = q.z;
-
-		return new Vector3((float)Math.toDegrees(Math.asin (2*(q0*q2 + q3*q1))),
-							(float)Math.toDegrees(Math.atan2(2*(q0*q3 + q1*q2), 1 - 2*(q2*q2 + q3*q3))),
-							(float)Math.toDegrees(Math.atan2(2*(q0*q1 + q2*q3), 1 - 2*(q1*q1 + q2*q2))));
+		return q.toEulerAngles();
 	}
-	public static Vector3 rotateVectorByQuaternion(Vector3 base, Quaternion q) {
+	public static Vector3 rotateVectorByQuaternion(Vector3 base, Quaternion qr) {
 		Quaternion qOut = new Quaternion(base.x, base.y, base.z, 0);
+		Quaternion q = qr.normalize();
 		return Quaternion.mult(Quaternion.mult(q.conjugate(), qOut), q).getImaginary();
 	}
 	public static Quaternion angleBetweenVectors(Vector3 v, Vector3 u) {
@@ -99,7 +107,7 @@ public class Quaternion {
 		sangle = (float)Math.acos(dotP);
 		
 		vNormal = normV2.cross(normV1).normalize();
-		return new Quaternion(vNormal, sangle);
+		return (new Quaternion(vNormal, sangle)).normalize();
 	}
 	
 	public float lenght() {
@@ -159,10 +167,29 @@ public class Quaternion {
 	}
 	
 	public Vector3 toEulerAngles() {
-		return Quaternion.toEulerAngles(this);
+		Quaternion pQin = normalize();
+
+		float q0 = pQin.x, 
+				q1 = pQin.y,
+				q2 = pQin.z,
+				q3 = pQin.w;
+		
+		float _x;
+		float _y;
+		float _z;
+		
+		_y = (float)Math.toDegrees(Math.atan2(2*(q1*q3 - q0*q2), 1 - 2*(q1*q1 + q2*q2)));
+		_z = (float)Math.toDegrees(Math.asin (2*(q0*q1 + q3*q2))); // there is an anomaly here that I have not been able to solve
+		_x = (float)Math.toDegrees(Math.atan2(2*(q0*q3 - q1*q2), 1 - 2*(q2*q2 + q0*q0))); 
+		
+		return new Vector3(_x, _y, _z);
 	}
 	
 	public Vector3 rotateVector(Vector3 base) {
 		return Quaternion.rotateVectorByQuaternion(base, this);
+	}
+	
+	public String toString(){
+		return "" + w + ", " + x + ", " + y + ", " + z;
 	}
 }

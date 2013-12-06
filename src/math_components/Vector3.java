@@ -111,4 +111,8 @@ public class Vector3 {
 	public void mult(Matrix4x4 m) {
 		set(Matrix4x4.multiplyVector3(this, m));
 	}
+	
+	public String toString(){
+		return "" + x + ", " + y + ", " + z;
+	}
 }

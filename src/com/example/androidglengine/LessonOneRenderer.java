@@ -7,6 +7,7 @@ import java.nio.FloatBuffer;
 import javax.microedition.khronos.egl.EGLConfig;
 import javax.microedition.khronos.opengles.GL10;
 
+import math_components.Quaternion;
 import math_components.Vector3;
 
 import opengl_components.GraphicEntity;
@@ -91,12 +92,25 @@ public class LessonOneRenderer implements GLSurfaceView.Renderer {
 		primaryEntity = new GraphicEntity();
 		secondaryEntity = new GraphicEntity();
 		
-		secondaryEntity.setPosition(new Vector3(3,0,5));
+		android.util.Log.d("ARES", Quaternion.identity().toString());
+		Vector3 euler = new Vector3(0,91,0);
+		Quaternion q = new Quaternion(euler);
+		android.util.Log.d("ARES", q.toString());
+		android.util.Log.d("ARES", q.toEulerAngles().toString());
+		
+		euler = new Vector3(0,181,0);
+		q = new Quaternion(euler);
+		android.util.Log.d("ARES", q.toString());
+		android.util.Log.d("ARES", q.toEulerAngles().toString());
+		
+		final Vector3 delta = new Vector3(0,0,1);
+		secondaryEntity.setEulerAngles(delta);
 		secondaryEntity.addScript(new Scriptable() {
 			
 			@Override
 			public void Update() {
-				secondaryEntity.setEulerAngles(Vector3.add(secondaryEntity.getEulerAngles(), new Vector3(0,1,0)));				
+				secondaryEntity.setEulerAngles(Vector3.add(secondaryEntity.getEulerAngles(), delta));
+				//android.util.Log.d("ARES", secondaryEntity.getEulerAngles().toString());
 			}
 			
 			@Override
@@ -184,7 +198,7 @@ public class LessonOneRenderer implements GLSurfaceView.Renderer {
 		// separately if we choose.
 		Matrix.setLookAtM(mViewMatrix, 0, eyeX, eyeY, eyeZ, lookX, lookY,
 				lookZ, upX, upY, upZ);
-
+		
 		final String vertexShader = "uniform mat4 u_MVPMatrix;      \n" // A
 																		// constant
 																		// representing
@@ -384,12 +398,13 @@ public class LessonOneRenderer implements GLSurfaceView.Renderer {
 
 		// Draw the triangle facing straight on.
 		Matrix.setIdentityM(mModelMatrix, 0);
-		Matrix.rotateM(mModelMatrix, 0, angleInDegrees, 0.0f, 0.0f, 1.0f);
+		Matrix.translateM(mModelMatrix, 0, 3.0f, 0.0f, 5.0f);
+		//Matrix.rotateM(mModelMatrix, 0, angleInDegrees, 0.0f, 0.0f, 1.0f);
 		drawTriangle(mTriangle1Vertices);
 
 		// Draw one translated a bit down and rotated to be flat on the ground.
 		Matrix.setIdentityM(mModelMatrix, 0);
-		Matrix.translateM(mModelMatrix, 0, 0.0f, -1.0f, 0.0f);
+		Matrix.translateM(mModelMatrix, 0, 0.f, -1.0f, 0.0f);
 		Matrix.rotateM(mModelMatrix, 0, 90.0f, 1.0f, 0.0f, 0.0f);
 		Matrix.rotateM(mModelMatrix, 0, angleInDegrees, 0.0f, 0.0f, 1.0f);
 		//drawTriangle(mTriangle2Vertices);
@@ -427,7 +442,10 @@ public class LessonOneRenderer implements GLSurfaceView.Renderer {
 		// This multiplies the view matrix by the model matrix, and stores the
 		// result in the MVP matrix
 		// (which currently contains model * view).
-		Matrix.multiplyMM(mMVPMatrix, 0, mViewMatrix, 0, secondaryEntity.getWorldTransformationMatrix().matrix(), 0);
+		float [] test1 = secondaryEntity.getWorldTransformationMatrix().matrix();
+		float [] test2  = new float[16];
+		Matrix.multiplyMM(mMVPMatrix, 0, mViewMatrix, 0, test1, 0);
+		Matrix.multiplyMM(test2, 0, mViewMatrix, 0, mModelMatrix, 0);
 
 		// This multiplies the modelview matrix by the projection matrix, and
 		// stores the result in the MVP matrix

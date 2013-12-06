@@ -51,7 +51,7 @@ public class GraphicEntity {
 		final Matrix4x4 scaleMatrix = Matrix4x4.createScaleMatrix(m_LocalScale);
 		final Matrix4x4 parentMatrix = m_Parent != null? m_Parent.getWorldTransformationMatrix() : Matrix4x4.identity();
 		
-		m_AccumulatedMatrix = Matrix4x4.mult(Matrix4x4.mult(scaleMatrix, rigidbodyMatrix), parentMatrix);
+		m_AccumulatedMatrix = Matrix4x4.mult(parentMatrix, Matrix4x4.mult(rigidbodyMatrix,scaleMatrix));
 		m_bMatrixIsDirty = false;
 	}
 	
@@ -109,8 +109,8 @@ public class GraphicEntity {
 	
 	// get as global components
 	public Quaternion getRotation() {
-		Quaternion p = m_Parent != null? m_Parent.getRotation() : Quaternion.identity();
-		return Quaternion.mult(p, m_LocalRotation);
+		Quaternion p = m_Parent != null? m_Parent.getRotation().normalize() : Quaternion.identity();
+		return Quaternion.mult(p, m_LocalRotation.normalize());
 	}
 	
 	public Vector3 getEulerAngles() {
@@ -119,7 +119,7 @@ public class GraphicEntity {
 	
 	public Vector3 getPosition() {
 		Matrix4x4 pTransf = m_Parent != null? m_Parent.getWorldTransformationMatrix() : Matrix4x4.identity();
-		return Matrix4x4.multiplyVector3(pTransf, m_LocalPosition);
+		return Matrix4x4.multiplyVector3(m_LocalPosition, pTransf);
 	}
 	
 	public Vector3 getScale() {
@@ -137,11 +137,11 @@ public class GraphicEntity {
 	// dunno though
 	public void setRotation(Quaternion rotation) {
 		Quaternion p = m_Parent != null? m_Parent.getRotation() : Quaternion.identity();
-		
+		p = p.normalize();
 		// invert
 		p = p.invert();
 		
-		m_LocalRotation = Quaternion.mult(p,rotation);
+		m_LocalRotation = Quaternion.normalize(Quaternion.mult(p,rotation));
 		m_bMatrixIsDirty = true;
 	}
 	
@@ -165,7 +165,7 @@ public class GraphicEntity {
 			invScale = Matrix4x4.identity();
 		}
 		
-		m_LocalPosition = Matrix4x4.multiplyVector3(Matrix4x4.mult(invScale, Matrix4x4.mult(invRotation, invTransl)), position);		
+		m_LocalPosition = Matrix4x4.multiplyVector3(position, Matrix4x4.mult(Matrix4x4.mult(invTransl, invRotation), invScale));		
 		m_bMatrixIsDirty = true;
 	}
 	
